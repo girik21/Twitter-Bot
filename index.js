@@ -5,13 +5,13 @@ import { fetchTopstories } from "./news/newsFetcher.js";
 import { geminiIntegration } from "./genAi/geminiIntegration.js";
 import { saveTweetsToFile } from "./utils/saveTweetsToFile.js";
 import { TwitterApi } from "twitter-api-v2";
+import { getPostedIds, savePostedId } from "./utils/supabaseTracker.js"; // ✅ Supabase import
 
 dotenv.config();
 
 const today = new Date().toISOString().split("T")[0];
 const outputDir = path.resolve("output");
 const tweetsFile = path.join(outputDir, `${today}.json`);
-const postedFile = path.join(outputDir, "posted.json");
 
 const twitterClient = new TwitterApi({
   appKey: process.env.TWITTER_API_KEY,
@@ -19,21 +19,6 @@ const twitterClient = new TwitterApi({
   accessToken: process.env.TWITTER_ACCESS_TOKEN,
   accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
 });
-
-const getPostedIds = async () => {
-  try {
-    const raw = await fs.readFile(postedFile, "utf-8");
-    return new Set(JSON.parse(raw));
-  } catch {
-    return new Set();
-  }
-};
-
-const savePostedId = async (contentId) => {
-  const posted = await getPostedIds();
-  posted.add(contentId);
-  await fs.writeFile(postedFile, JSON.stringify([...posted], null, 2), "utf-8");
-};
 
 const postTweet = async (tweet) => {
   const hashtags = tweet.hashtags.join(" ");
@@ -74,6 +59,8 @@ const ensureTweetsExist = async () => {
 
 const run = async () => {
   try {
+    console.log("🕐 Running tweet cron at", new Date().toLocaleString());
+
     await ensureTweetsExist();
 
     const raw = await fs.readFile(tweetsFile, "utf-8");
@@ -93,5 +80,4 @@ const run = async () => {
   }
 };
 
-console.log("🕐 Running tweet cron at", new Date().toLocaleString());
 run();
