@@ -41,7 +41,16 @@ export const geminiIntegration = async (stories, limit = 3) => {
 
   try {
     const parsed = JSON.parse(jsonText);
-    return parsed; // ✅ this is what tweetsResponse will get
+
+    const tweetsWithHnId = parsed.map(tweet => {
+      const match = stories.find(s => tweet.link.includes(s.url));
+      return {
+        ...tweet,
+        hnId: match?.id || null,
+      };
+    });
+
+    return tweetsWithHnId
   } catch (err) {
     console.error("❌ Failed to parse Gemini JSON output:", jsonText);
     throw err;

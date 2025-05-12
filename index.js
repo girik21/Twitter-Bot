@@ -5,7 +5,7 @@ import { fetchTopstories } from "./news/newsFetcher.js";
 import { geminiIntegration } from "./genAi/geminiIntegration.js";
 import { saveTweetsToFile } from "./utils/saveTweetsToFile.js";
 import { TwitterApi } from "twitter-api-v2";
-import { getPostedIds, savePostedId } from "./utils/supabaseTracker.js"; // ✅ Supabase import
+import { getPostedIds, savePostedId } from "./utils/supabaseTracker.js";
 
 dotenv.config();
 
@@ -34,6 +34,13 @@ const postTweet = async (tweet) => {
     const res = await twitterClient.v2.tweet({ text });
     console.log("✅ Tweet posted:", res.data.id);
   } catch (err) {
+    if (
+      err?.data?.title === "Forbidden" &&
+      err?.data?.detail?.includes("duplicate content")
+    ) {
+      console.warn("⚠️ Duplicate tweet detected. Skipping.");
+      return;
+    }
     console.error("❌ Failed to post tweet:", err?.data || err.message);
     throw err;
   }
@@ -67,14 +74,14 @@ const run = async () => {
     const tweets = JSON.parse(raw);
     const posted = await getPostedIds();
 
-    const nextTweet = tweets.find((t) => !posted.has(t.contentId));
+    const nextTweet = tweets.find((t) => !posted.has(t.hnId));
     if (!nextTweet) {
       console.log("✅ All tweets already posted for today.");
       return;
     }
 
     await postTweet(nextTweet);
-    await savePostedId(nextTweet.contentId);
+    await savePostedId(nextTweet.hnId);
   } catch (err) {
     console.error("❌ Failed:", err?.message || err);
   }

@@ -1,15 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
-import path from "path"; // <-- You forgot this import
+import path from "path";
 
 dotenv.config({ path: path.resolve("../.env") });
 
-const dbUrl = process.env.SUPABASE_URL
-const anon =  process.env.SUPABASE_ANON_KEY
-
 const supabase = createClient(
-  dbUrl,
-  anon
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
 );
 
 export const getPostedIds = async () => {
@@ -18,16 +15,17 @@ export const getPostedIds = async () => {
     console.error("❌ Error fetching posted IDs:", error);
     return new Set();
   }
-  return new Set(data?.map((row) => row.content_id));
+  return new Set(data.map((row) => row.content_id)); // using hnId stored in content_id
 };
 
-export const savePostedId = async (contentId) => {
-  const { error } = await supabase.from("tweets").insert([{ content_id: contentId }]);
+export const savePostedId = async (hnId) => {
+  const { error } = await supabase.from("tweets").insert([{ content_id: hnId }]);
   if (error) {
     console.error("❌ Error saving posted ID:", error);
   }
 };
 
+// Optional: run once to test connection
 const testConnection = async () => {
   const { data, error } = await supabase.from("tweets").select("*").limit(1);
   if (error) {
@@ -38,4 +36,3 @@ const testConnection = async () => {
 };
 
 testConnection();
-

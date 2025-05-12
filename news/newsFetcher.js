@@ -12,8 +12,13 @@ export const fetchTopstories = async (limit = 20) => {
       );
 
       return storyResponse
-        .map((result) => result.data)
-        .filter((story) => story && story.title && story.url);
+        .map((result) => ({
+          id: result.data.id, // include original Hacker News ID
+          title: result.data.title,
+          url: result.data.url,
+        }))
+        .filter((story) => story.title && story.url);
+
     }
   } catch (error) {
     console.log("Error Calling the Hacker News API", error);
